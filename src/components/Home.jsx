@@ -12,7 +12,7 @@ function Home({ t, isPlaying, isPlayerReady, toggleAnthem }) {
         className="hero-video"
         poster="/hero.png"
       >
-        <source src="/Kurdistan.mp4" type="video/mp4" />
+        <source src="/kurdistan.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
 
