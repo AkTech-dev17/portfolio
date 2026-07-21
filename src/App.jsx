@@ -23,9 +23,9 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   
-  // 🌟 New States for Auto-Play Logic
-  const [hasAutoPlayed, setHasAutoPlayed] = useState(false); 
-  const autoPlayTimerRef = useRef(null); 
+  // 🌟 Auto-Play Preview States
+  const [hasPreviewed, setHasPreviewed] = useState(false); 
+  const previewTimerRef = useRef(null); 
   const playerRef = useRef(null);
 
   // Load YouTube IFrame Player API
@@ -68,6 +68,7 @@ function App() {
       events: {
         onReady: () => setIsPlayerReady(true),
         onStateChange: (event) => {
+          // Let the YouTube API directly control our React state to ensure they are always synced
           if (event.data === window.YT.PlayerState.PLAYING) setIsPlaying(true);
           else if (event.data === window.YT.PlayerState.PAUSED) setIsPlaying(false);
         }
@@ -75,54 +76,40 @@ function App() {
     });
   };
 
-  // 🌟 UPDATED: Auto-play and 15-second timer logic
+  // Handle Tab Switching (Pause audio if they leave the Home tab)
   useEffect(() => {
     if (isPlayerReady && playerRef.current) {
-      if (activeTab === 'home') {
-        
-        // 1. If this is the very first visit, trigger the 15-second preview
-        if (!hasAutoPlayed) {
-          setHasAutoPlayed(true);
-          setIsPlaying(true);
-          playerRef.current.playVideo();
-
-          // 2. Automatically pause after exactly 15 seconds
-          autoPlayTimerRef.current = setTimeout(() => {
-            setIsPlaying((prev) => {
-              if (prev) {
-                playerRef.current?.pauseVideo();
-                return false;
-              }
-              return prev;
-            });
-          }, 15000);
-          
-        } else {
-          // 3. Normal play/pause behavior for returning visits
-          if (isPlaying) {
-            playerRef.current.playVideo();
-          } else {
-            playerRef.current.pauseVideo();
-          }
-        }
-      } else {
-        // 4. Pause audio instantly when leaving the Home tab
+      if (activeTab !== 'home') {
         playerRef.current.pauseVideo();
-        if (isPlaying) setIsPlaying(false);
+      } else if (isPlaying) {
+        playerRef.current.playVideo();
       }
     }
-  }, [activeTab, isPlaying, isPlayerReady, hasAutoPlayed]);
+  }, [activeTab, isPlayerReady]);
 
+  // 🌟 The 15-Second Preview Logic
   const toggleAnthem = () => {
-    if (!isPlayerReady) return;
+    if (!isPlayerReady || !playerRef.current) return;
 
-    // 🛑 If the user manually clicks the button, cancel the 15-second auto-stop
-    if (autoPlayTimerRef.current) {
-      clearTimeout(autoPlayTimerRef.current);
-      autoPlayTimerRef.current = null;
+    if (isPlaying) {
+      // If user clicks stop manually, cancel the timer and pause
+      playerRef.current.pauseVideo();
+      if (previewTimerRef.current) {
+        clearTimeout(previewTimerRef.current);
+        previewTimerRef.current = null;
+      }
+    } else {
+      // Play the audio
+      playerRef.current.playVideo();
+      
+      // If this is the FIRST time they clicked play, set the 15-second auto-stop timer
+      if (!hasPreviewed) {
+        setHasPreviewed(true);
+        previewTimerRef.current = setTimeout(() => {
+          playerRef.current?.pauseVideo();
+        }, 15000); // 15 seconds
+      }
     }
-
-    setIsPlaying(!isPlaying);
   };
 
   const handlePageChange = (tabName) => {
