@@ -15,17 +15,13 @@ function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [menuOpen, setMenuOpen] = useState(false);
   
-  // 🌐 Language State
+  // 🌐 Language State ('en' for English, 'ku' for Kurdish)
   const [lang, setLang] = useState('en');
   const t = translations[lang];
 
   // 🎵 YouTube Player States
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
-  
-  // 🌟 Auto-Play Preview States
-  const [hasPreviewed, setHasPreviewed] = useState(false); 
-  const previewTimerRef = useRef(null); 
   const playerRef = useRef(null);
 
   // Load YouTube IFrame Player API
@@ -68,7 +64,6 @@ function App() {
       events: {
         onReady: () => setIsPlayerReady(true),
         onStateChange: (event) => {
-          // Let the YouTube API directly control our React state to ensure they are always synced
           if (event.data === window.YT.PlayerState.PLAYING) setIsPlaying(true);
           else if (event.data === window.YT.PlayerState.PAUSED) setIsPlaying(false);
         }
@@ -76,40 +71,20 @@ function App() {
     });
   };
 
-  // Handle Tab Switching (Pause audio if they leave the Home tab)
   useEffect(() => {
     if (isPlayerReady && playerRef.current) {
-      if (activeTab !== 'home') {
-        playerRef.current.pauseVideo();
-      } else if (isPlaying) {
+      if (activeTab === 'home' && isPlaying) {
         playerRef.current.playVideo();
+      } else {
+        playerRef.current.pauseVideo();
+        if (activeTab !== 'home') setIsPlaying(false);
       }
     }
-  }, [activeTab, isPlayerReady]);
+  }, [activeTab, isPlaying, isPlayerReady]);
 
-  // 🌟 The 15-Second Preview Logic
   const toggleAnthem = () => {
-    if (!isPlayerReady || !playerRef.current) return;
-
-    if (isPlaying) {
-      // If user clicks stop manually, cancel the timer and pause
-      playerRef.current.pauseVideo();
-      if (previewTimerRef.current) {
-        clearTimeout(previewTimerRef.current);
-        previewTimerRef.current = null;
-      }
-    } else {
-      // Play the audio
-      playerRef.current.playVideo();
-      
-      // If this is the FIRST time they clicked play, set the 15-second auto-stop timer
-      if (!hasPreviewed) {
-        setHasPreviewed(true);
-        previewTimerRef.current = setTimeout(() => {
-          playerRef.current?.pauseVideo();
-        }, 15000); // 15 seconds
-      }
-    }
+    if (!isPlayerReady) return;
+    setIsPlaying(!isPlaying);
   };
 
   const handlePageChange = (tabName) => {
@@ -117,7 +92,7 @@ function App() {
     setMenuOpen(false);
   };
 
-  return (
+ return (
     <div className={`${darkMode ? "app dark-theme" : "app light-theme"} ${lang === 'ku' ? 'rtl-mode' : ''}`}>
       
       {/* Hidden YouTube Audio Container */}
