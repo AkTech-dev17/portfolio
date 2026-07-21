@@ -10,10 +10,10 @@ function Home({ t, isPlaying, isPlayerReady, toggleAnthem }) {
         playsInline 
         preload="auto"
         className="hero-video"
-        poster="src/assets/hero.png"
+        poster="/hero.png"
       >
-        <source src="public/Kurdistan.mp4" type="video/mp4" />
-        Your browser d oes not support the video tag.
+        <source src="/Kurdistan.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
       </video>
 
       <div className="hero-overlay"></div>
@@ -44,7 +44,7 @@ function Home({ t, isPlaying, isPlayerReady, toggleAnthem }) {
       <div className="hero-content">
         <div className="profile-img-container">
           <img 
-            src="public/Ak_ProfilePic.jpg" 
+            src="/Ak_ProfilePic.jpg" 
             alt="Akar Shwan" 
             className="profile-img" 
             onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }} 
